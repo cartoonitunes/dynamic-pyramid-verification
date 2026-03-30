@@ -12,32 +12,42 @@
 
 ## Compiler
 
-- **Version**: solc v0.2.0 (native C++ build, webthree-umbrella v1.1.2)
-- **Optimizer**: ON
+Two compiler builds both produce an exact byte-for-byte match:
 
-The JS soljson compiler produces different bytecode for this era. Only the native C++ compiler built from [webthree-umbrella v1.1.2](https://github.com/ethereum/webthree-umbrella/releases/tag/v1.1.2) reproduces the exact on-chain bytecode.
+1. **soljson-v0.2.0-nightly.2016.1.20+commit.67c855c5.js** — JS/emscripten nightly build (January 20, 2016), optimizer ON
+2. **solc v0.2.0 native C++** (webthree-umbrella v1.1.2), optimizer ON
 
-## Verification
+The JS soljson nightly from January 20, 2016 reproduces the exact on-chain bytecode. This is a nightly pre-release of v0.2.0, built with emscripten, available from the [Solidity binaries repository](https://binaries.soliditylang.org/bin/soljson-v0.2.0-nightly.2016.1.20+commit.67c855c5.js).
+
+## Verification (soljson nightly — recommended)
+
+```bash
+# Download the soljson nightly
+curl -O https://binaries.soliditylang.org/bin/soljson-v0.2.0-nightly.2016.1.20+commit.67c855c5.js
+
+# Compile with solc-js
+npx solc-js --solc-path ./soljson-v0.2.0-nightly.2016.1.20+commit.67c855c5.js --optimize --bin DynamicPyramid.sol
+
+# Compare the output against onchain-creation.hex
+```
+
+Or run the included verification script:
+
+```bash
+chmod +x verify.sh
+./verify.sh
+```
+
+## Verification (native C++ — alternative)
 
 ```bash
 # Build the Docker image first (one-time)
 docker build -t solc-umbrella https://raw.githubusercontent.com/cartoonitunes/doubler-verification/main/Dockerfile
 
-# Run verification
-chmod +x verify.sh
-./verify.sh
-```
-
-## How to Reproduce
-
-Build native C++ solc from webthree-umbrella v1.1.2:
-
-```bash
+# Compile with native C++ solc
 docker run --rm -v "$(pwd):/src" solc-umbrella sh -c \
   "cd /src && /umbrella/build/solidity/solc/solc --optimize --bin DynamicPyramid.sol"
 ```
-
-Compare the `DynamicPyramid` section output against `onchain-creation.hex`.
 
 ## Contract Behavior
 
@@ -55,7 +65,10 @@ A self-adjusting pyramid scheme that changes payout multipliers as participation
 
 The contract ran out of funds before completing its payout queue. 136 of 140 participants are still waiting. 37 ETH remains locked, not enough to cover the remaining obligations. The creator (`0xe5478b...`) extracted fees but left participants waiting.
 
+The soljson nightly `v0.2.0-nightly.2016.1.20+commit.67c855c5` produces an exact bytecode match — previously only the native C++ build was confirmed. Both compiler routes are now verified.
+
 ## Links
 
 - [EthereumHistory.com](https://www.ethereumhistory.com/contract/0xa9e4e3b1da2462752aea980698c335e70e9ab26c)
 - [awesome-ethereum-proofs](https://github.com/cartoonitunes/awesome-ethereum-proofs)
+- [Sourcify](https://repo.sourcify.dev/contracts/full_match/1/0xa9e4e3b1da2462752aea980698c335e70e9ab26c/)
